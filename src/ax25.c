@@ -842,7 +842,7 @@ short is_call(const char *c)
     }
 }
 
-void dump_uidata_from(uidata_t *uidata_p)
+void dump_uidata_from(uidata_t *uidata_p, short verbose)
 {
     char          stamp[MAX_MESSAGE_LENGTH + 1];
     struct tm    *t;
@@ -853,25 +853,25 @@ void dump_uidata_from(uidata_t *uidata_p)
     tzset();
     t = localtime(&now);
     strftime(stamp, MAX_MESSAGE_LENGTH- 1, "[%b %d %Y - %H:%M:%S]", t);
-    printf("%s",stamp);
+    if (verbose) printf("%s",stamp);
 
-    printf("\r\nfrom:%d ", (short) uidata_p->port + 1);
+    if (verbose) printf("\r\nfrom:%d ", (short) uidata_p->port + 1);
 
-    dump_uidata_common(uidata_p, REMOTE);
+    dump_uidata_common(uidata_p, REMOTE, verbose);
 
-    if(uidata_p->distance == LOCAL)
+    if(uidata_p->distance == LOCAL && verbose)
     {
         printf("This is a local station\r\n");
     }
 } 
 
-void dump_uidata_common(uidata_t *uidata_p, distance_t distance)
+void dump_uidata_common(uidata_t *uidata_p, distance_t distance, short verbose)
 {
     short         i;
     short         did_digi;
     unsigned char c;
 
-    printf("%s > %s", uidata_p->originator, uidata_p->destination);
+    if (verbose) printf("%s > %s", uidata_p->originator, uidata_p->destination);
 
     /* remember if we already displayed a digi, used for " via" text */
     did_digi = 0;
@@ -891,17 +891,17 @@ void dump_uidata_common(uidata_t *uidata_p, distance_t distance)
             if(did_digi == 0)
             {
                 /* first digi in output, add " via" text */
-                printf(" via");
+                if (verbose) printf(" via");
                 did_digi = 1;
             }
-            printf(" %s", uidata_p->digipeater[i]);
+            if (verbose) printf(" %s", uidata_p->digipeater[i]);
             if((uidata_p->digi_flags[i] & H_FLAG) != 0)
             {
-                printf("*");
+                if (verbose) printf("*");
             }
             if((uidata_p->digi_flags[i] & RR_FLAG) != RR_FLAG)
             {
-                printf("!");
+                if (verbose) printf("!");
             }
         }
     }
@@ -912,51 +912,51 @@ void dump_uidata_common(uidata_t *uidata_p, distance_t distance)
     if((i & 0x01) == 0)
     {
         /* I frame */
-        printf(" I%d,%d", (i >> 5) & 0x07, (i >> 1) & 0x07);
+        if (verbose) printf(" I%d,%d", (i >> 5) & 0x07, (i >> 1) & 0x07);
     }
     else if((i & 0x02) == 0)
     {
         /* S frame */
         switch((i >> 2) & 0x03) {
         case 0:
-                printf(" RR");
+                if (verbose) printf(" RR");
                 break;
         case 1:
-                printf(" RNR");
+                if (verbose) printf(" RNR");
                 break;
         case 2:
-                printf(" REJ");
+                if (verbose) printf(" REJ");
                 break;
         default:
-                printf(" ???");
+                if (verbose) printf(" ???");
                 break;
         }
-        printf("%d", (i >> 5) & 0x07);
+        if (verbose) printf("%d", (i >> 5) & 0x07);
     }
     else
     {
         /* U frame */
         switch((i >> 2) & 0x3f) {
         case 0x00:
-                printf(" UI");
+                if (verbose) printf(" UI");
                 break;
         case 0x03:
-                printf(" DM");
+                if (verbose) printf(" DM");
                 break;
         case 0x0B:
-                printf(" SABM");
+                if (verbose) printf(" SABM");
                 break;
         case 0x10:
-                printf(" DISC");
+                if (verbose) printf(" DISC");
                 break;
         case 0x18:
-                printf(" UA");
+                if (verbose) printf(" UA");
                 break;
         case 0x21:
-                printf(" FRMR");
+                if (verbose) printf(" FRMR");
                 break;
         default:
-                printf(" ???");
+                if (verbose) printf(" ???");
                 break;
         }
     }
@@ -964,25 +964,25 @@ void dump_uidata_common(uidata_t *uidata_p, distance_t distance)
     if((uidata_p->primitive & 0x10) == 0)
     {
         if((uidata_p->dest_flags & C_FLAG) != 0)
-            printf("^");
+            if (verbose) printf("^");
         else
-            printf("v");
+            if (verbose) printf("v");
     }
     else
     {
         if((uidata_p->dest_flags & C_FLAG) != 0)
-            printf("+");
+            if (verbose) printf("+");
         else
-            printf("-");
+            if (verbose) printf("-");
     }
 
     /* if we have a PID */
     if(uidata_p->pid != 0xffff)
-        printf(" PID=%X", ((short) uidata_p->pid) & 0x00ff);
+        if (verbose) printf(" PID=%X", ((short) uidata_p->pid) & 0x00ff);
 
     if(uidata_p->size > 0)
     {
-        printf(" %d bytes\r\n", uidata_p->size);
+        if (verbose) printf(" %d bytes\r\n", uidata_p->size);
 
         for(i = 0; i < uidata_p->size; i++)
         {
@@ -991,16 +991,16 @@ void dump_uidata_common(uidata_t *uidata_p, distance_t distance)
             {
                 if(c == '\r')
                 {
-                    printf("\r\n");
+                    if (verbose) printf("\r\n");
                 }
                 else
-                    printf(".");
+                    if (verbose) printf(".");
             }
             else
             {
-                printf("%c", c);
+                if (verbose) printf("%c", c);
             }
         }
     }
-    printf("\r\n");
+    if (verbose) printf("\r\n");
 }

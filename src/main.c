@@ -156,7 +156,7 @@ int main(int argc, char *argv[]) {
 				result = frame2uidata(&frame, &uidata_p, mycall);
 				if (result == 1) {
 					//show ax25 data on screen.
-					if (verbose) dump_uidata_from(&uidata_p);
+					dump_uidata_from(&uidata_p, verbose);
 					//format for igate transmission.
 					igateformat(&uidata_p, mycall, igatestring);
 					//show the data in igate format.
