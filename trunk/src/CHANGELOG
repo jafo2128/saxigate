@@ -1,9 +1,3 @@
-KNOWN BUGS
-
-	- When run without the verbose flag, a segmentation fault occurs when a few frames are received.
-	  This is probably caused by a buffer clean that is done by dump_uidata_from() in verbose mode.
-	  Workaround: Run program in verbose mode.
-
 CHANGELOG:
 
 v0.1.3: - Initial release to public (google code) under the GNU License.
@@ -12,6 +6,7 @@ v0.1.3: - Initial release to public (google code) under the GNU License.
 		- Using STD_ERR for error messages.
 		- Actually using the Verbose flag (-v). No output to STD_OUT if omitted.
 		- Checking for -p, -c and -s flags! These are required.
+		- Fixed bug that would give a Segmentation Fault when NOT running in verbose mode.
 
 v0.1.2: - Added code to connect, login and send data to APRS-IS. Tested with my own APRS-IS server T2BELGIUM 
           running javAPRSSrvr 3.14b05 with 2 live APRS digi's (ON0DAS-4 & ON0BAF-4)
