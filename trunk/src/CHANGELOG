@@ -1,0 +1,24 @@
+KNOWN BUGS
+
+	- When run without the verbose flag, a segmentation fault occurs when a few frames are received.
+	  This is probably caused by a buffer clean that is done by dump_uidata_from() in verbose mode.
+	  Workaround: Run program in verbose mode.
+
+CHANGELOG:
+
+v0.1.3: - Initial release to public (google code) under the GNU License.
+		- Code cleanup and added comments for my own sake :p I tend to forget what something is for when a project
+		  is in the fridge to long.
+		- Using STD_ERR for error messages.
+		- Actually using the Verbose flag (-v). No output to STD_OUT if omitted.
+		- Checking for -p, -c and -s flags! These are required.
+
+v0.1.2: - Added code to connect, login and send data to APRS-IS. Tested with my own APRS-IS server T2BELGIUM 
+          running javAPRSSrvr 3.14b05 with 2 live APRS digi's (ON0DAS-4 & ON0BAF-4)
+        - Modified ax25 code to also read packages that are locally transmitted (for digi beacons etc)
+
+v0.1.1: - Added callpass generator (code from Xastir) and formatting of ax25 data for I-gate transmission.
+
+v0.1.0: - Initial code to read ax25 messages from the kernel. Code copied from the digi_ned project
+          and modified to suit saxIgate needs.
+        
