@@ -24,7 +24,8 @@
  * Digi_ned is an excellent APRS DigiPeater for DOS and LINUX.
  * For more info, please visit: http://www.homepages.hetnet.nl/~pe1dnn/
  */
- 
+#ifndef _AX25_H_
+#define _AX25_H_
 
 
 #define MAX_PORTS            8     /* Maximum number of PORTS in AX25_MAC  */ 
@@ -91,3 +92,4 @@ void dump_uidata_from(uidata_t *uidata_p, short);
 void dump_uidata_common(uidata_t *uidata_p, distance_t distance, short);
 int numports(void);
 
+#endif
