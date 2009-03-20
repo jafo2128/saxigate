@@ -67,7 +67,7 @@ short checkCache(uidata_t *uidata) {
 		struct cacheNode *tmp = lastCacheNode;
 		lastCacheNode = liveData;
 		tmp->next = lastCacheNode;
-		printf("%i\n",cacheCount);
+		//printf("%i\n",cacheCount);
 	}
 
 	return 1;
@@ -76,7 +76,7 @@ short checkCache(uidata_t *uidata) {
 short cacheCompareNodes(struct cacheNode *node1, struct cacheNode *node2) {
 	struct cacheItem *item1 = node1->item;
 	struct cacheItem *item2 = node2->item;
-	printf("%s ~ %s | %s ~ %s | %s ~ %s\n",item1->src, item2->src,item1->dst, item2->dst,item1->data, item2->data);
+	//printf("%s ~ %s | %s ~ %s | %s ~ %s\n",item1->src, item2->src,item1->dst, item2->dst,item1->data, item2->data);
 	return ((!strcmp(item1->src, item2->src)) && (!strcmp(item1->dst, item2->dst)) && (!strcmp(item1->data, item2->data))); 
 }
 
