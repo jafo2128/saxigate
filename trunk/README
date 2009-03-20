@@ -1,3 +1,15 @@
 saxIgate: A small APRS I-Gate for Linux
 
 More to come...
+
+To install:
+
+Run './configure'
+Run 'make'
+
+src/saxIgate is the program you need.
+Running 'make install' will put it in /usr/local/sbin/
+
+Run 'saxIgate' (or './saxIgate' if the file is local) will show you options needed to run.
+
+
