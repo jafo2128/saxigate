@@ -44,7 +44,7 @@ am__installdirs = "$(DESTDIR)$(bindir)"
 binPROGRAMS_INSTALL = $(INSTALL_PROGRAM)
 PROGRAMS = $(bin_PROGRAMS)
 am_saxIgate_OBJECTS = main.$(OBJEXT) telnet.$(OBJEXT) ax25.$(OBJEXT) \
-	callpass.$(OBJEXT)
+	callpass.$(OBJEXT) cache.$(OBJEXT)
 saxIgate_OBJECTS = $(am_saxIgate_OBJECTS)
 saxIgate_DEPENDENCIES =
 DEFAULT_INCLUDES = -I.@am__isrc@ -I$(top_builddir)
@@ -140,7 +140,7 @@ sysconfdir = @sysconfdir@
 target_alias = @target_alias@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
-saxIgate_SOURCES = main.c telnet.c ax25.c callpass.c
+saxIgate_SOURCES = main.c telnet.c ax25.c callpass.c cache.c
 saxIgate_LDADD = -lax25
 all: all-am
 
@@ -209,6 +209,7 @@ distclean-compile:
 	-rm -f *.tab.c
 
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ax25.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/cache.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/callpass.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/main.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/telnet.Po@am__quote@
