@@ -1,12 +1,15 @@
 CHANGELOG:
 
-v0.1.3: - Initial release to public (google code) under the GNU License.
-		- Code cleanup and added comments for my own sake :p I tend to forget what something is for when a project
-		  is in the fridge to long.
-		- Using STD_ERR for error messages.
-		- Actually using the Verbose flag (-v). No output to STD_OUT if omitted.
-		- Checking for -p, -c and -s flags! These are required.
-		- Fixed bug that would give a Segmentation Fault when NOT running in verbose mode.
+v0.1.4: - Program now reconnects on disconnect instead of exiting.
+	- Caching system added to prevent double data to be send after a digipeater re-airs it.
+		
+v0.1.3: - Initial release to public (google code) under the GNU License v3.
+	- Code cleanup and added comments for my own sake :p I tend to forget what something is for when a project
+	  is in the fridge to long.
+	- Using STD_ERR for error messages.
+	- Actually using the Verbose flag (-v). No output to STD_OUT if omitted.
+	- Checking for -p, -c and -s flags! These are required.
+	- Fixed bug that would give a Segmentation Fault when NOT running in verbose mode.
 
 v0.1.2: - Added code to connect, login and send data to APRS-IS. Tested with my own APRS-IS server T2BELGIUM 
           running javAPRSSrvr 3.14b05 with 2 live APRS digi's (ON0DAS-4 & ON0BAF-4)

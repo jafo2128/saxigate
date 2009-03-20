@@ -38,11 +38,13 @@
 #include "ax25.h"
 #include "callpass.h"
 #include "telnet.h"
+#include "cache.h"
 
-#define version "0.1.3"
+#define version "0.1.4"
 
 void strtoupper(char*);
 void igateformat(uidata_t*, char*, char*);
+void connectAndLogin(char *hostname,int port,char *mycall,short callpass,short verbose);
 void showhelp(char*);
 
 //main routine.
@@ -131,12 +133,7 @@ int main(int argc, char *argv[]) {
 	if (verbose) printf("Mycall: %s\nCallpass: %d\nServer: %s port %i\n\n",mycall, callpass, hostname, port);
 	
 	//connect to APRS-IS
-	if (verbose) printf("Connecting to %s:%i and logging in as %s\n",hostname,port,mycall);
-	connectToAPRSIS(hostname, port);
-	usleep(25000);
-	loginToAPRSIS(mycall, callpass, version);
-	//if we get here we should be connected.
-	if (verbose) printf("Connected!\n\n");
+	connectAndLogin(hostname,port,mycall,callpass,verbose);
 	
 	//run main loop
 	while(1) {
@@ -157,12 +154,23 @@ int main(int argc, char *argv[]) {
 				if (result == 1) {
 					//show ax25 data on screen.
 					dump_uidata_from(&uidata_p, verbose);
-					//format for igate transmission.
-					igateformat(&uidata_p, mycall, igatestring);
-					//show the data in igate format.
-					if (verbose) printf("To igate: %s\n\n",igatestring);
-					//send to igate.
-					sendDataToAPRSIS(igatestring);
+					//check cache for double data.
+					if (checkCache(&uidata_p)) { 
+						//format for igate transmission.
+						igateformat(&uidata_p, mycall, igatestring);
+						//show the data in igate format.
+						if (verbose) printf("To igate: %s\n\n",igatestring);
+						//send to igate.
+						if (!sendDataToAPRSIS(igatestring)) {
+							//we probably lost connection to the igate. Lets try to connect again.
+							disconnectFromAPRSIS();
+							if (verbose) printf("Connection lost to %s:%i. Reconnecting in 5 seconds..\n",hostname,port);
+							sleep(5);
+							connectAndLogin(hostname,port,mycall,callpass,verbose);
+						}
+					} else {
+						if (verbose) printf("Double data. Already sent to i-gate.\n");
+					} //endif (checkCache);
 				} //endif (result==1)
 			}	//endif(mac_inp)
 		} //endwhile (mac_avl)
@@ -194,9 +202,31 @@ void igateformat(uidata_t *uidata, char *mycall, char *out) {
 	sprintf(out,"%s>%s%s,qAR,%s:%s", uidata->originator, uidata->destination,digis,mycall,data);
 }
 
+
+
 //convert all chars in string to uppercase.
 void strtoupper(char* s) {
 	while ((*s = toupper(*s))) ++s;
+}
+
+void connectAndLogin(char *hostname,int port,char *mycall,short callpass,short verbose) {
+	if (verbose) printf("Connecting to %s:%i as %s\n",hostname,port,mycall);
+	if (connectToAPRSIS(hostname, port)) {
+		usleep(25000);
+		if (!loginToAPRSIS(mycall, callpass, version)) {
+			if (verbose) printf("Failed to send login data. Retrying in 5 seconds..\n");
+			disconnectFromAPRSIS();
+			sleep(5);
+			connectAndLogin(hostname,port,mycall,callpass,verbose);
+		} else {
+			if (verbose) printf("Connected!\n");
+		}
+	} else {
+		if (verbose) printf("Failed to connect. Retrying in 5 seconds..\n");
+		disconnectFromAPRSIS();
+		sleep(5);
+		connectAndLogin(hostname,port,mycall,callpass,verbose);
+	}
 }
 
 //show usage help

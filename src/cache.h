@@ -15,11 +15,28 @@
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+ 
+#ifndef _CACHE_H_
+#define _CACHE_H_
+ 
+ #include "ax25.h"
+ 
+ #define CACHE_SIZE 10
+ 
+ struct cacheItem {
+	char src[10];
+	char dst[10];
+	char data[1000];
+};
 
+struct cacheNode {
+	struct cacheItem *item;
+	struct cacheNode *next; 
+};
 
-int sockfd;
+short checkCache(uidata_t*);
+struct cacheNode *createCacheNode(uidata_t *uidata);
+struct cacheItem *createCacheItem(uidata_t *uidata);
+short cacheCompareNodes(struct cacheNode *node1, struct cacheNode *node2);
 
-short connectToAPRSIS(char*, int);
-short sendDataToAPRSIS(char[]);
-short loginToAPRSIS(char*, short, char*);
-void disconnectFromAPRSIS();
+#endif

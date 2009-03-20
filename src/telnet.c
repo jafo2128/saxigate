@@ -26,8 +26,12 @@
 
 #include "telnet.h"
 
+void disconnectFromAPRSIS() {
+	close(sockfd);
+}
+
 //connect To APRSIS server (standard telnet socket though)
-void connectToAPRSIS(char *hostname, int port) {
+short connectToAPRSIS(char *hostname, int port) {
 	struct hostent *server;
 	struct sockaddr_in serv_addr;
 
@@ -59,13 +63,15 @@ void connectToAPRSIS(char *hostname, int port) {
 	
 	//connect to server.
 	if(connect(sockfd,&serv_addr,sizeof(serv_addr)) < 0) {
-		fprintf(stderr,"ERROR connection");
-		exit(-1);
+		//fprintf(stderr,"ERROR connection");
+		return 0;
+	} else {
+		return 1;
 	}
 }
 
 //send data to APRSIS server over sockfd
-void sendDataToAPRSIS(char buffer[1000]) {
+short sendDataToAPRSIS(char buffer[1000]) {
 	int n;
 	//make sure a \n\r is at the end of the line to send.
 	sprintf(buffer, "%s\n\r", buffer);
@@ -73,18 +79,20 @@ void sendDataToAPRSIS(char buffer[1000]) {
 	n = write(sockfd,buffer,strlen(buffer));
 	//fail ? exit!
 	if (n < 0) {
-		fprintf(stderr,"ERROR writing to socket");
-		exit(-1);
+		//fprintf(stderr,"ERROR writing to socket");
+		return 0;
+	} else {
+		return 1;
 	}
 }
 
 //login to APRS server.
-void loginToAPRSIS(char *callsign, short callpass, char *version) {
+short loginToAPRSIS(char *callsign, short callpass, char *version) {
 	char buffer[1000];
 	//generate login string for aprs-is (javaprs docs)
 	sprintf(buffer, "user %s pass %d vers saxIgate %s",callsign,callpass,version);
 	//send it over the socket.
-	sendDataToAPRSIS(buffer);
+	return sendDataToAPRSIS(buffer);
 }
  
 
