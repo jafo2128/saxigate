@@ -60,7 +60,7 @@ short checkCache(uidata_t *uidata) {
 			//pop off the first node before adding a new one.
 			struct cacheNode *old = firstCacheNode;
 			firstCacheNode = old->next;
-			free(old);
+			cacheFreeNode(old);
 			cacheCount--;
 		}
 		//add current node to the list.
@@ -101,4 +101,9 @@ struct cacheItem* createCacheItem(uidata_t *uidata) {
 	strcpy(item->data,uidata->data);
 	
 	return item;
+}
+
+void cacheFreeNode(struct cacheNode *node) {
+	free(node->item);
+	free(node);
 }

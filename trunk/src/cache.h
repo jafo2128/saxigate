@@ -38,5 +38,6 @@ short checkCache(uidata_t*);
 struct cacheNode *createCacheNode(uidata_t *uidata);
 struct cacheItem *createCacheItem(uidata_t *uidata);
 short cacheCompareNodes(struct cacheNode *node1, struct cacheNode *node2);
+void cacheFreeNode(struct cacheNode *node);
 
 #endif
