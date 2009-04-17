@@ -190,16 +190,17 @@ int main(int argc, char *argv[]) {
 
 //format data to be transmitted to an Igate
 void igateformat(uidata_t *uidata, char *mycall, char *out) {
-	char *digis = "";		//save digi's
+	char digis[100] = {0};		//save digi's
 	char data[1000] = {0};	//save data, clear reserved memory.
 	int i;					//counter for for's
 	
 	//run trough digi's in uidata.
+	printf("Total Digis: %i\n",uidata->ndigi);
 	for (i = 0; i < uidata->ndigi; i++) {
-		char *tmp;	//tmp
+		char tmp[100];	//tmp
 		sprintf(tmp, "%s,%s", digis, uidata->digipeater[i]);	//DIGICALL,NEWDIGICALL
-		digis = tmp; 
-		
+		strcpy(digis,tmp); 
+		printf("Digis: %i->%s = %s\n",i,uidata->digipeater[i],digis);		
 	}
 	
 	//run trough data and copy it byte per byte.

@@ -1,6 +1,7 @@
 CHANGELOG:
 
 v0.1.5: - Fixed some memory leaks that caused crash after a few days.
+	- Fixed bug that would truncate digipath on some systems.
 
 v0.1.4: - Program now reconnects on disconnect instead of exiting.
 	- Caching system added to prevent double data to be send after a digipeater re-airs it.
