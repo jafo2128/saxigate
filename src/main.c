@@ -17,6 +17,8 @@
  */
 
 
+
+
 #include <ctype.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -35,12 +37,15 @@
 #include <netax25/axlib.h>
 #include <netax25/axconfig.h>
 
+#include <mcheck.h>
+
+
 #include "ax25.h"
 #include "callpass.h"
 #include "telnet.h"
 #include "cache.h"
 
-#define version "0.1.4"
+#define version "0.1.5"
 
 void strtoupper(char*);
 void igateformat(uidata_t*, char*, char*);
@@ -49,6 +54,8 @@ void showhelp(char*);
 
 //main routine.
 int main(int argc, char *argv[]) {
+	//mtrace();
+
 	int c;				//for getopt
 	short verbose = 0;	//boolean for verbose
 	char *mycall;		//our callsign
@@ -56,7 +63,12 @@ int main(int argc, char *argv[]) {
 	char *portstr;		//aprs-is server port as text
 	int port;			//aprs-is server port as integer
 	short callpass; 	//callpass for out callsign from callpass generator
-
+	frame_t frame; 		//save raw ax25 frame.
+	uidata_t uidata_p; 	//save decoded ax25 frame.
+	short result; 		//save result from decoding.
+	char igatestring[1000] = {0}; //save igate format string
+		
+		
 	//get options from argv 	
 	while ((c = getopt(argc, argv, "hvc:p:s:")) != -1) {
 		switch (c) {
@@ -134,16 +146,11 @@ int main(int argc, char *argv[]) {
 	
 	//connect to APRS-IS
 	connectAndLogin(hostname,port,mycall,callpass,verbose);
-	
+
 	//run main loop
 	while(1) {
 		//sleep 25ms to avoid using 100% cpu
 		usleep(25000);
-		
-		frame_t frame; 		//save raw ax25 frame.
-		uidata_t uidata_p; 	//save decoded ax25 frame.
-		short result; 		//save result from decoding.
-		char igatestring[1000] = {0}; //save igate format string
 		
 		//check for new data
 		while (mac_avl()) { 
@@ -176,6 +183,8 @@ int main(int argc, char *argv[]) {
 		} //endwhile (mac_avl)
 	} //endwhile mainloop. (ctrl+c or external signal)
 	
+	//muntrace();
+	
 	return 0; 
 }
 
@@ -190,6 +199,7 @@ void igateformat(uidata_t *uidata, char *mycall, char *out) {
 		char *tmp;	//tmp
 		sprintf(tmp, "%s,%s", digis, uidata->digipeater[i]);	//DIGICALL,NEWDIGICALL
 		digis = tmp; 
+		
 	}
 	
 	//run trough data and copy it byte per byte.

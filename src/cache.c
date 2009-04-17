@@ -22,7 +22,7 @@
 
 #include "cache.h" 
 #include "ax25.h"
- 
+
  
  
 struct cacheNode *firstCacheNode = NULL;
@@ -35,6 +35,7 @@ short checkCache(uidata_t *uidata) {
 		struct cacheNode *node = createCacheNode(uidata);
 		firstCacheNode = node;
 		lastCacheNode = node;
+		//cacheCount++;
 		//since there was no data, there could not be any doubles.
 		return 1;
 	} 
@@ -52,6 +53,7 @@ short checkCache(uidata_t *uidata) {
 	} while((current = current->next) != 0);
 
 	if (foundDuplicate) {
+		//cacheFreeNode(liveData);
 		return 0;
 	} else {
 		//increase the cacheCount.
