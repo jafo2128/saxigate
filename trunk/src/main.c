@@ -195,12 +195,12 @@ void igateformat(uidata_t *uidata, char *mycall, char *out) {
 	int i;					//counter for for's
 	
 	//run trough digi's in uidata.
-	printf("Total Digis: %i\n",uidata->ndigi);
+	//printf("Total Digis: %i\n",uidata->ndigi);
 	for (i = 0; i < uidata->ndigi; i++) {
 		char tmp[100];	//tmp
 		sprintf(tmp, "%s,%s", digis, uidata->digipeater[i]);	//DIGICALL,NEWDIGICALL
 		strcpy(digis,tmp); 
-		printf("Digis: %i->%s = %s\n",i,uidata->digipeater[i],digis);		
+		//printf("Digis: %i->%s = %s\n",i,uidata->digipeater[i],digis);		
 	}
 	
 	//run trough data and copy it byte per byte.
