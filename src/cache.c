@@ -87,7 +87,7 @@ short cacheCompareNodes(struct cacheNode *node1, struct cacheNode *node2) {
 struct cacheNode* createCacheNode(uidata_t *uidata) {
 	struct cacheNode *node = NULL;
 	//alloc memory for node
-	node = (struct cacheNode*)calloc(1,sizeof(struct cacheNode));
+	node = (struct cacheNode*)malloc(sizeof(struct cacheNode));
 	//no next node yet.
 	node->next = NULL;
 	node->item = createCacheItem(uidata);
@@ -104,13 +104,13 @@ struct cacheItem* createCacheItem(uidata_t *uidata) {
 	strcpy(item->dst,uidata->destination);
 	strcpy(item->data,uidata->data);
 
-	printf("Created Node/Item: %s,%s,%s",item->src,item->dst,item->data);
+	//printf("Created Node/Item: %s,%s,%s\n",item->src,item->dst,item->data);
 	
 	return item;
 }
 
 void cacheFreeNode(struct cacheNode *node) {
-	printf("Deleted Node/Item: %s,%s,%s",node->item->src,node->item->dst,node->item->data);
+	//printf("Deleted Node/Item: %s,%s,%s\n",node->item->src,node->item->dst,node->item->data);
 	
 	free(node->item);
 	free(node);
