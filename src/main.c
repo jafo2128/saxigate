@@ -58,7 +58,7 @@ int main(int argc, char *argv[]) {
 
 	int c;				//for getopt
 	short verbose = 0;	//boolean for verbose
-	char *mycall;		//our callsign
+	char mycall[10];		//our callsign
 	char *hostname;		//aprs-is server hostname
 	char *portstr;		//aprs-is server port as text
 	int port;			//aprs-is server port as integer
@@ -68,7 +68,11 @@ int main(int argc, char *argv[]) {
 	short result; 		//save result from decoding.
 	char igatestring[1000] = {0}; //save igate format string
 		
-		
+	//alloc space for hostname & portstr
+	hostname = calloc(100, sizeof(char));
+	portstr = calloc(10, sizeof(char));
+	
+	
 	//get options from argv 	
 	while ((c = getopt(argc, argv, "hvc:p:s:")) != -1) {
 		switch (c) {
@@ -79,7 +83,7 @@ int main(int argc, char *argv[]) {
 			
 			case 'C': //set our callsign
 			case 'c':
-				mycall = optarg;
+				strcpy(mycall,optarg);
 				//make sure string is in uppercase.
 				strtoupper(mycall); 
 
@@ -106,6 +110,7 @@ int main(int argc, char *argv[]) {
 					//or use specified, convert to int.
 					port = atoi(portstr);
 				}
+				free(portstr);
 				break;
 			
 			case 'P': //add a ax25 port.
