@@ -115,6 +115,12 @@ int main(int argc, char *argv[]) {
 				
 		}
 	}
+
+	//check if flags are specified.
+	if ((numports() < 1) || (hostname == NULL) || (mycall == NULL)) {
+		showhelp(argv[0]);
+	}
+
 	//deamon mode.
 	if (verbose == 0) {
 		int fx;
@@ -128,12 +134,6 @@ int main(int argc, char *argv[]) {
 			exit(-1); //exit parent.
 		}
 	}
-
-	//check if flags are specified.
-	if ((numports() < 1) || (hostname == NULL) || (mycall == NULL)) {
-		showhelp(argv[0]);
-	}
-
 
 	//open mac layer to AX25 in kernel or die.
 	if (!mac_init()) {
