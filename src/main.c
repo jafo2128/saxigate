@@ -24,28 +24,13 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-#include <errno.h>
-#include <sys/time.h>
-#include <time.h>
-#include <sys/types.h>
-#include <net/if.h>
-#include <sys/socket.h>
-//#include <linux/ax25.h>
-#include <linux/if_ether.h>
-#include <asm/byteorder.h>
-#include <netax25/kernel_ax25.h>
-#include <netax25/axlib.h>
-#include <netax25/axconfig.h>
-
-#include <mcheck.h>
-
 
 #include "ax25.h"
 #include "callpass.h"
 #include "telnet.h"
 #include "cache.h"
 
-#define version "0.1.5"
+#define version "0.1.6"
 
 void strtoupper(char*);
 void igateformat(uidata_t*, char*, char*);
@@ -54,8 +39,6 @@ void showhelp(char*);
 
 //main routine.
 int main(int argc, char *argv[]) {
-	//mtrace();
-
 	int c;				//for getopt
 	short verbose = 0;	//boolean for verbose
 	char mycall[10];		//our callsign
@@ -133,6 +116,17 @@ int main(int argc, char *argv[]) {
 		}
 	}
 
+	printf("saxIgate v%s (c) 2009 Robbie De Lise (ON4SAX)\n",version);
+	//deamon mode.
+	if (verbose == 0) {
+		int fx;
+		fx = fork();
+		if (fx != 0) {
+			printf("Running as deamon with pid %i\n\r",fx);
+			exit(-1); //exit parent.
+		}
+	}
+
 	//check if flags are specified.
 	if ((numports() < 1) || (hostname == NULL) || (mycall == NULL)) {
 		showhelp(argv[0]);
@@ -146,8 +140,7 @@ int main(int argc, char *argv[]) {
 	}		
 	
 	//print some data.
-	if (verbose) printf("saxIgate v%s (c) 2009 Robbie De Lise (ON4SAX)\n\n",version);
-	if (verbose) printf("Mycall: %s\nCallpass: %d\nServer: %s port %i\n\n",mycall, callpass, hostname, port);
+	if (verbose) printf("\nMycall: %s\nCallpass: %d\nServer: %s port %i\n\n",mycall, callpass, hostname, port);
 	
 	//connect to APRS-IS
 	connectAndLogin(hostname,port,mycall,callpass,verbose);
@@ -187,8 +180,6 @@ int main(int argc, char *argv[]) {
 			}	//endif(mac_inp)
 		} //endwhile (mac_avl)
 	} //endwhile mainloop. (ctrl+c or external signal)
-	
-	//muntrace();
 	
 	return 0; 
 }
@@ -260,3 +251,5 @@ void showhelp(char *filename) {
 	printf("Report bugs to <on4sax@on4sax.be>.\n");
 	exit(-1);
 }
+
+

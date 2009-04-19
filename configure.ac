@@ -1,4 +1,4 @@
-AC_INIT([saxIgate],[0.1.5],[on4sax@on4sax.be])
+AC_INIT([saxIgate],[0.1.6],[on4sax@on4sax.be])
 AM_INIT_AUTOMAKE([-Wall -Werror foreign])
 AC_PROG_CC
 AC_CONFIG_HEADERS([config.h])

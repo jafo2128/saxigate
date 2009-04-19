@@ -23,6 +23,8 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <netdb.h>
+#include <string.h>
+#include <unistd.h>
 
 #include "telnet.h"
 
@@ -77,7 +79,7 @@ short sendDataToAPRSIS(char buffer[1000]) {
 	sprintf(buffer, "%s\n\r", buffer);
 	//send line.
 	n = write(sockfd,buffer,strlen(buffer));
-	//fail ? exit!
+	//fail ?
 	if (n < 0) {
 		//fprintf(stderr,"ERROR writing to socket");
 		return 0;
@@ -92,7 +94,17 @@ short loginToAPRSIS(char *callsign, short callpass, char *version) {
 	//generate login string for aprs-is (javaprs docs)
 	sprintf(buffer, "user %s pass %d vers saxIgate %s",callsign,callpass,version);
 	//send it over the socket.
-	return sendDataToAPRSIS(buffer);
+	if (sendDataToAPRSIS(buffer)) {
+		usleep(10000); //wait 10ms.
+		//sendout an ID beacon over APRS-IS.
+		sprintf(buffer, "%s>ID,qAR,%s:%s IGATE running saxIgate %s",callsign,callsign,callsign,version);
+		if (sendDataToAPRSIS(buffer))
+			return 1;
+		else
+			return 0;
+	} else {
+		return 0; 
+	};
 }
  
 

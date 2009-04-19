@@ -40,6 +40,7 @@
 #include <netax25/kernel_ax25.h>
 #include <netax25/axlib.h>
 #include <netax25/axconfig.h>
+#include <netinet/in.h>
 
 #include "ax25.h"
 
@@ -82,7 +83,7 @@ short mac_init(void)
 	//check for root user.
     if(geteuid() != 0)
     {
-        fprintf(stderr,"Must be run as root");
+        fprintf(stderr,"Must be run as root\r\n");
         exit(-1);
     }
 
@@ -963,17 +964,19 @@ void dump_uidata_common(uidata_t *uidata_p, distance_t distance, short verbose)
 
     if((uidata_p->primitive & 0x10) == 0)
     {
-        if((uidata_p->dest_flags & C_FLAG) != 0)
+        if((uidata_p->dest_flags & C_FLAG) != 0) {
             if (verbose) printf("^");
-        else
+        } else {
             if (verbose) printf("v");
+        }
     }
     else
     {
-        if((uidata_p->dest_flags & C_FLAG) != 0)
+        if((uidata_p->dest_flags & C_FLAG) != 0) {
             if (verbose) printf("+");
-        else
+        } else {
             if (verbose) printf("-");
+        }
     }
 
     /* if we have a PID */
@@ -1004,3 +1007,5 @@ void dump_uidata_common(uidata_t *uidata_p, distance_t distance, short verbose)
     }
     if (verbose) printf("\r\n");
 }
+
+
