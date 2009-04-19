@@ -1,5 +1,9 @@
 CHANGELOG:
 
+v0.1.6: - saxIgate now runs as a deamon when not in verbose mode.
+	- Cleaned up #includes to get rid of 'Implicit Declaration' warnings when compiling.
+	- saxIgate sends out an ID beacon on connect over TCP/IP only (not on RF).
+
 v0.1.5: - Fixed some memory leaks that caused crash after a few days.
 	- Fixed bug that would truncate digipath on some systems.
 

@@ -23,7 +23,7 @@
  #include "callpass.h"
  
 
- 
+  
  /* This code was taken from the Xastir project */
  short genCallPass(char *theCall) {
 	char rootCall[10]; // need to copy call to remove ssid from parse
@@ -46,3 +46,5 @@
 	}
 	return (short)(hash & 0x7fff); //mask off the high bit so number is always positive
 }
+
+
