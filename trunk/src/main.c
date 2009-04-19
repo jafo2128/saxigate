@@ -39,12 +39,12 @@ void showhelp(char*);
 
 //main routine.
 int main(int argc, char *argv[]) {
-	int c;				//for getopt
+	int c = 0;				//for getopt
 	short verbose = 0;	//boolean for verbose
-	char mycall[10];		//our callsign
+	char mycall[10] = {0};		//our callsign
 	char *hostname;		//aprs-is server hostname
 	char *portstr;		//aprs-is server port as text
-	int port;			//aprs-is server port as integer
+	int port = 0;			//aprs-is server port as integer
 	short callpass; 	//callpass for out callsign from callpass generator
 	frame_t frame; 		//save raw ax25 frame.
 	uidata_t uidata_p; 	//save decoded ax25 frame.
@@ -55,6 +55,8 @@ int main(int argc, char *argv[]) {
 	hostname = calloc(100, sizeof(char));
 	portstr = calloc(10, sizeof(char));
 	
+	//plot program info
+	printf("saxIgate v%s (c) 2009 Robbie De Lise (ON4SAX)\n",version);
 	
 	//get options from argv 	
 	while ((c = getopt(argc, argv, "hvc:p:s:")) != -1) {
@@ -93,6 +95,7 @@ int main(int argc, char *argv[]) {
 					//or use specified, convert to int.
 					port = atoi(portstr);
 				}
+				//no need for portstr anymore..
 				free(portstr);
 				break;
 			
@@ -106,21 +109,20 @@ int main(int argc, char *argv[]) {
 				break;
 			case 'H': //print help.
 			case 'h': 
+			case '?':
 				showhelp(argv[0]);
 				break;	
-			
-			case '?': //something wrong with opts ?
-				showhelp(argv[0]);
-				break;
 				
 		}
 	}
-
-	printf("saxIgate v%s (c) 2009 Robbie De Lise (ON4SAX)\n",version);
 	//deamon mode.
 	if (verbose == 0) {
 		int fx;
 		fx = fork();
+		if (fx == -1) {
+			fprintf(stderr,"Failed to start as deamon\n\r");
+			exit(-1);
+		}
 		if (fx != 0) {
 			printf("Running as deamon with pid %i\n\r",fx);
 			exit(-1); //exit parent.
@@ -174,7 +176,7 @@ int main(int argc, char *argv[]) {
 							connectAndLogin(hostname,port,mycall,callpass,verbose);
 						}
 					} else {
-						if (verbose) printf("Double data. Already sent to i-gate.\n");
+						if (verbose) printf("Double data. Already sent to APRS-IS.\n");
 					} //endif (checkCache);
 				} //endif (result==1)
 			}	//endif(mac_inp)
@@ -238,16 +240,14 @@ void connectAndLogin(char *hostname,int port,char *mycall,short callpass,short v
 
 //show usage help
 void showhelp(char *filename) {
-	printf("\nsaxIgate v%s (c) 2009 Robbie De Lise (ON4SAX)\n",version);
 	printf("Usage: %s -p <port> [-p <port>] [-p <port>] [...] -c <igatecall> -s <APRS-IS server> [-v]\n\n",filename);
 	printf("\t-p\tAdd an AX25 port to listen on. Multiples can be specified with a maximum of 8\n");
 	printf("\t-c\tThe callsign to login to APRS-IS. eg: ON4SAX-10\n");
 	printf("\t-s\tThe address to connect to APRS-IS. eg: t2belgium.aprs2.net:14580\n");
 	printf("\t\tor t2belgium.aprs2.net. In the latter the default port 14580 will be used.\n");
-	printf("\t-v\tVerbose output.\n");
+	printf("\t-v\tVerbose output. Program will stay in foreground.\n");
 	printf("\t-h\tPrint help (you are looking at it)\n");
-	printf("\nCurrent version does not go into deamon mode. Please use '&' to place proc into background\n");
-	printf("\nExample of Usage: %s -p 2m -p 70cm -c ON4SAX-10 -s t2belgium.aprs2.net:14580 &\n\n",filename);
+	printf("\nExample of Usage: %s -p 2m -p 70cm -c ON4SAX-10 -s t2belgium.aprs2.net:14580\n\n",filename);
 	printf("Report bugs to <on4sax@on4sax.be>.\n");
 	exit(-1);
 }

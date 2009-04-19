@@ -97,7 +97,7 @@ short loginToAPRSIS(char *callsign, short callpass, char *version) {
 	if (sendDataToAPRSIS(buffer)) {
 		usleep(10000); //wait 10ms.
 		//sendout an ID beacon over APRS-IS.
-		sprintf(buffer, "%s>ID,qAR,%s:%s IGATE running saxIgate %s",callsign,callsign,callsign,version);
+		sprintf(buffer, "%s>ID,qAR,%s:>%s IGATE running saxIgate %s",callsign,callsign,callsign,version);
 		if (sendDataToAPRSIS(buffer))
 			return 1;
 		else
