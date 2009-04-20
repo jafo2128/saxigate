@@ -18,8 +18,25 @@
 
 
 int sockfd;
+char rcvBuffer[8192];
+
+typedef struct telnet_uidata_s {
+	char src[9];
+	char path[100];
+	char data[1000];	
+} telnet_uidata_t;
+
+/*typedef struct rcvBuffer {
+	char line[1024];
+	struct rcvBuffer *next;
+} rcvBuffer;
+
+rcvBuffer *firstRcvBuffer;
+*/
 
 short connectToAPRSIS(char*, int);
 short sendDataToAPRSIS(char[]);
 short loginToAPRSIS(char*, short, char*);
 void disconnectFromAPRSIS();
+short readDataFromAPRSIS(char *buffer);
+short decodeTelnetFrame(char *frame, telnet_uidata_t *uidata);

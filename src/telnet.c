@@ -87,12 +87,97 @@ short sendDataToAPRSIS(char buffer[1000]) {
 		return 1;
 	}
 }
+ 
+short readDataFromAPRSIS(char *buffer) {
+	//This function will read the telnet data in chunks of 256 bytes and place them
+	//in a 8kb buffer. It will then search the buffer for the first '\n' and return the
+	//line. Next time, even if there is no telnet data waiting, we can return the next line.
+	
+	int i = 0; //4fors.
+	int cc = 0; //to see if we have received anything.
+	char localbuffer[256] = {0}; //to save data we rcvd from sockfd
+	
+	//make sure caller buffer is empty.
+	for (i = 0; i <= strlen(buffer); i++) {
+		buffer[i] = '\0';
+	}
+	
+	//read into localbuffer
+	cc = read(sockfd, (char *)localbuffer, 256);
+	if (cc > 0) { //if there is any data..
+		//append localbuffer to rcvBuffer.
+		strcat(rcvBuffer,localbuffer);
+	}
+	
+	if (strlen(rcvBuffer) > 0) { //if there is data in rcvBuffer..
+		//scan to first '\n';
+		short lookingForLinefeed = 1;
+		char newRcvBuffer[8192] = {0};
+		for (i = 0; i <= strlen(rcvBuffer); i++) {
+			if (rcvBuffer[i] != '\n' && rcvBuffer[i] != '\r' && lookingForLinefeed) {
+				sprintf(buffer,"%s%c",buffer,rcvBuffer[i]);
+			} else if (lookingForLinefeed) {
+				//we are no longer looking for \n or \r, we have what we need. Turn it of. 
+				lookingForLinefeed = 0;
+				//check if next char is \n or \r and skip it to avoid sending back an empty buffer next run.
+				if (rcvBuffer[i] == '\n' || rcvBuffer[i] == '\r') i++;
+			} else {
+				if (rcvBuffer[i] != '\0') //we don't want the nullbyte from the previous rcvBuffer
+					//copy the remainder into a newRcvBuffer for next run.
+					sprintf(newRcvBuffer,"%s%c",newRcvBuffer,rcvBuffer[i]);
+			}
+		}
+		//copy the new buffer to the live buffer.
+		strcpy(rcvBuffer,newRcvBuffer);
+		printf("\n***********\nrcv:%s\n************\n",rcvBuffer);
+		//we have data!
+		return 1;
+	}
+	//we have no data..*/
+	return 0;
+}
+
+short decodeTelnetFrame(char *frame, telnet_uidata_t *uidata) {
+	if (frame == NULL)
+		return 0; //no data.
+	
+	if (frame[0] == '#') //OOB data from javaprssrv etc
+		return 0;
+	
+	char *from;
+	char *path;
+	char *payload;
+	//make room for data;
+	from = calloc(10,sizeof(char));
+	path = calloc(100,sizeof(char));
+	payload = calloc(1000,sizeof(char));
+	//split frame into pieces	
+	from = strtok(frame,">");
+	path = strtok(NULL,":");
+	payload = strtok(NULL,"\0");
+	
+	//check if we miss any data. if so, we do not have a msg.
+	if (from == NULL || path == NULL || payload == NULL) {
+		/*if (from != NULL) free(from);
+		if (path != NULL) free(path);
+		if (payload != NULL) free(payload);*/
+		return 0;
+	}
+	
+	strcpy(uidata->src,from);
+	strcpy(uidata->path,path);
+	strcpy(uidata->data,payload);
+	
+	printf("%s | %s | %s\n",from,path,payload);
+	
+	return 1;
+}
 
 //login to APRS server.
 short loginToAPRSIS(char *callsign, short callpass, char *version) {
 	char buffer[1000];
 	//generate login string for aprs-is (javaprs docs)
-	sprintf(buffer, "user %s pass %d vers saxIgate %s",callsign,callpass,version);
+	sprintf(buffer, "user %s pass %d vers saxIgate %s filter t/m",callsign,callpass,version);
 	//send it over the socket.
 	if (sendDataToAPRSIS(buffer)) {
 		usleep(10000); //wait 10ms.
