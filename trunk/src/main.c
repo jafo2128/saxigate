@@ -29,10 +29,11 @@
 #include "callpass.h"
 #include "telnet.h"
 #include "cache.h"
-
-#define version "0.1.6"
+ 
+#define version "0.1.7-beta"
 
 void strtoupper(char*);
+short checkMessageAgainstMH(telnet_uidata_t *uidata);
 void igateformat(uidata_t*, char*, char*);
 void connectAndLogin(char *hostname,int port,char *mycall,short callpass,short verbose);
 void showhelp(char*);
@@ -50,7 +51,10 @@ int main(int argc, char *argv[]) {
 	uidata_t uidata_p; 	//save decoded ax25 frame.
 	short result; 		//save result from decoding.
 	char igatestring[1000] = {0}; //save igate format string
-		
+	char telnetrxdata[2048] = {0}; //telnet rx buffer.
+	short gotTelnetData = 0; //bool to check if we have telnetdata
+	telnet_uidata_t telnet_uidata; //save decoded telnet frame.
+	
 	//alloc space for hostname & portstr
 	hostname = calloc(100, sizeof(char));
 	portstr = calloc(10, sizeof(char));
@@ -181,9 +185,41 @@ int main(int argc, char *argv[]) {
 				} //endif (result==1)
 			}	//endif(mac_inp)
 		} //endwhile (mac_avl)
+	
+	
+		//check for data on telnet
+		gotTelnetData = readDataFromAPRSIS(telnetrxdata);
+		if (gotTelnetData) {
+			printf("Telnet: %s\n",telnetrxdata);
+			decodeTelnetFrame(telnetrxdata,&telnet_uidata);			
+		}
+			
+
 	} //endwhile mainloop. (ctrl+c or external signal)
 	
 	return 0; 
+}
+
+short checkMessageAgainstMH(telnet_uidata_t *uidata) {
+	//if the payload starts with ':' we have a message.
+	/*if (uidata->data[0] == ':') {
+		//we have a msg!
+		char *to;
+		char *msg;
+		to = calloc(10,sizeof(char));
+		msg = calloc(1000,sizeof(char));
+		to = strtok(payload,":");
+		msg = strtok(NULL,"\0");
+		//check MH to see if we want to gate this to RF.
+		printf("msg to: %s | %s\n",to,msg);
+	}*/
+	
+	
+	//free(from);
+	//free(to);
+	//free(msg);
+	
+	return 0;
 }
 
 //format data to be transmitted to an Igate
