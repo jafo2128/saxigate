@@ -40,6 +40,8 @@ short connectToAPRSIS(char *hostname, int port) {
 	//create socket.
 	sockfd = socket(AF_INET, SOCK_STREAM, 0);
 	
+
+	
 	//check if we are alive.
 	if (sockfd < 0) {
 		fprintf(stderr,"ERROR opening socket");
@@ -97,16 +99,32 @@ short readDataFromAPRSIS(char *buffer) {
 	int cc = 0; //to see if we have received anything.
 	char localbuffer[256] = {0}; //to save data we rcvd from sockfd
 	
+	//how long should we wait for data ?
+	struct timeval timeout; 
+	timeout.tv_sec = 1; //one second.
+	timeout.tv_usec = 0;
+	
+	//add to fd_set socks
+	fd_set socks;
+	FD_ZERO(&socks);
+	FD_SET(sockfd,&socks);
+	
 	//make sure caller buffer is empty.
 	for (i = 0; i <= strlen(buffer); i++) {
 		buffer[i] = '\0';
 	}
 	
-	//read into localbuffer
-	cc = read(sockfd, (char *)localbuffer, 256);
-	if (cc > 0) { //if there is any data..
-		//append localbuffer to rcvBuffer.
-		strcat(rcvBuffer,localbuffer);
+	//check if there is data waiting
+	int tmp = 0;
+	tmp = select(sockfd+1, &socks, (fd_set *) 0, (fd_set *) 0, &timeout);
+	//printf("%i\n",tmp);
+	if (tmp > 0) {
+		//read into localbuffer
+		cc = read(sockfd, (char *)localbuffer, 256);
+		if (cc > 0) { //if there is any data..
+			//append localbuffer to rcvBuffer.
+			strcat(rcvBuffer,localbuffer);
+		}
 	}
 	
 	if (strlen(rcvBuffer) > 0) { //if there is data in rcvBuffer..
@@ -115,6 +133,7 @@ short readDataFromAPRSIS(char *buffer) {
 		char newRcvBuffer[8192] = {0};
 		for (i = 0; i <= strlen(rcvBuffer); i++) {
 			if (rcvBuffer[i] != '\n' && rcvBuffer[i] != '\r' && lookingForLinefeed) {
+				//copy everything until \n or \r into the return buffer.
 				sprintf(buffer,"%s%c",buffer,rcvBuffer[i]);
 			} else if (lookingForLinefeed) {
 				//we are no longer looking for \n or \r, we have what we need. Turn it of. 
@@ -129,7 +148,7 @@ short readDataFromAPRSIS(char *buffer) {
 		}
 		//copy the new buffer to the live buffer.
 		strcpy(rcvBuffer,newRcvBuffer);
-		printf("\n***********\nrcv:%s\n************\n",rcvBuffer);
+		//printf("\n***********\nrcv:%s\n************\n",rcvBuffer);
 		//we have data!
 		return 1;
 	}
@@ -168,16 +187,22 @@ short decodeTelnetFrame(char *frame, telnet_uidata_t *uidata) {
 	strcpy(uidata->path,path);
 	strcpy(uidata->data,payload);
 	
-	printf("%s | %s | %s\n",from,path,payload);
+	//printf("%s | %s | %s\n",from,path,payload);
 	
 	return 1;
 }
 
 //login to APRS server.
-short loginToAPRSIS(char *callsign, short callpass, char *version) {
+short loginToAPRSIS(char *callsign, short callpass, char *version, short messagegate) {
 	char buffer[1000];
+	char filter[12] = {0};
+	
+	if (messagegate == 1) {
+		strcpy(filter," filter t/m");
+	}
+	
 	//generate login string for aprs-is (javaprs docs)
-	sprintf(buffer, "user %s pass %d vers saxIgate %s filter t/m",callsign,callpass,version);
+	sprintf(buffer, "user %s pass %d vers saxIgate %s%s",callsign,callpass,version,filter);
 	//send it over the socket.
 	if (sendDataToAPRSIS(buffer)) {
 		usleep(10000); //wait 10ms.

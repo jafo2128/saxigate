@@ -36,7 +36,7 @@ rcvBuffer *firstRcvBuffer;
 
 short connectToAPRSIS(char*, int);
 short sendDataToAPRSIS(char[]);
-short loginToAPRSIS(char*, short, char*);
+short loginToAPRSIS(char*, short, char*, short);
 void disconnectFromAPRSIS();
 short readDataFromAPRSIS(char *buffer);
 short decodeTelnetFrame(char *frame, telnet_uidata_t *uidata);
