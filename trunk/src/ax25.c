@@ -1076,10 +1076,21 @@ void dump_uidata_from(uidata_t *uidata_p, short verbose)
     }
 } 
 
-void dump_uidata_to(char *to, uidata_t *uidata_p)
+void dump_uidata_to(uidata_t *uidata_p, short verbose)
 {
-    printf("to:%s ", to);
-    dump_uidata_common(uidata_p, REMOTE, 1);
+    char          stamp[MAX_MESSAGE_LENGTH + 1];
+    struct tm    *t;
+    time_t        now;
+
+    /* show timestamp */
+    now = time(NULL);
+    tzset();
+    t = localtime(&now);
+    strftime(stamp, MAX_MESSAGE_LENGTH- 1, "[%b %d %Y - %H:%M:%S]", t);
+    if (verbose) printf("%s",stamp);
+
+    printf("\n\rto:%d \n\r", (short) uidata_p->port + 1);
+    dump_uidata_common(uidata_p, REMOTE, verbose);
 }
 
 void dump_uidata_common(uidata_t *uidata_p, distance_t distance, short verbose)
