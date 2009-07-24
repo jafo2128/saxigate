@@ -1,5 +1,10 @@
 CHANGELOG:
 
+v0.1.7 BETA: - Fixed a bug that would crash the app when a port was specified. Thx to OK1TEB for notifying me.
+	- Added -m flag to enable MessageGate; Warning! Still in beta.
+	  CURRENTLY SENDS _ALL_ MESSAGES FROM APRSIS ON PORT 1. THIS IS A LOT
+	  OF RF SPAM !!! DO NOT USE IN PRODUCTION !!!
+
 v0.1.6: - saxIgate now runs as a deamon when not in verbose mode.
 	- Cleaned up #includes to get rid of 'Implicit Declaration' warnings when compiling.
 	- saxIgate sends out an ID beacon on connect over TCP/IP only (not on RF).

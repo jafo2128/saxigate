@@ -85,10 +85,13 @@ int add_port(char *port_p);
 short mac_init(void);
 short mac_avl(void);
 short mac_inp(frame_t *frame_p);
+short mac_out(frame_t *frame_p);
 void dump_raw(frame_t *frame_p);
 short frame2uidata(frame_t *frame_p, uidata_t *uidata_p,char*);
+void uidata2frame(uidata_t *uidata_p, frame_t *frame_p);
 short is_call(const char *c);
 void dump_uidata_from(uidata_t *uidata_p, short);
+void dump_uidata_to(char *to, uidata_t *uidata_p);
 void dump_uidata_common(uidata_t *uidata_p, distance_t distance, short);
 int numports(void);
 

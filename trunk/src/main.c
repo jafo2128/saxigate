@@ -32,10 +32,13 @@
  
 #define version "0.1.7-beta"
 
+
+short checkMessageAgainstMHandPrepareForTX(telnet_uidata_t *uidata, char *mycall, char *rftx);
+void sendToRf(char *payload, char *mycall);
+
 void strtoupper(char*);
-short checkMessageAgainstMH(telnet_uidata_t *uidata);
 void igateformat(uidata_t*, char*, char*);
-void connectAndLogin(char *hostname,int port,char *mycall,short callpass,short verbose);
+void connectAndLogin(char *hostname,int port,char *mycall,short callpass,short,short verbose);
 void showhelp(char*);
 
 //main routine.
@@ -52,8 +55,8 @@ int main(int argc, char *argv[]) {
 	short result; 		//save result from decoding.
 	char igatestring[1000] = {0}; //save igate format string
 	char telnetrxdata[2048] = {0}; //telnet rx buffer.
-	short gotTelnetData = 0; //bool to check if we have telnetdata
 	telnet_uidata_t telnet_uidata; //save decoded telnet frame.
+	short messagegate = 0; //for the messagegate function.
 	
 	//alloc space for hostname & portstr
 	hostname = calloc(100, sizeof(char));
@@ -63,7 +66,7 @@ int main(int argc, char *argv[]) {
 	printf("saxIgate v%s (c) 2009 Robbie De Lise (ON4SAX)\n",version);
 	
 	//get options from argv 	
-	while ((c = getopt(argc, argv, "hvc:p:s:")) != -1) {
+	while ((c = getopt(argc, argv, "hvmc:p:s:")) != -1) {
 		switch (c) {
 			case 'V': //verbose mode
 			case 'v':
@@ -90,8 +93,8 @@ int main(int argc, char *argv[]) {
 			case 'S': //set aprs-is server
 			case 's':
 				//split string on ':' for hostname and port.
-				hostname = strtok(optarg,":");
-				portstr = strtok(NULL,"\0");
+				strcpy(hostname,strtok(optarg,":"));
+				strcpy(portstr,strtok(NULL,"\0"));
 				//if no port specified, use default.
 				if (portstr == NULL) {
 					port = 14580;
@@ -110,6 +113,11 @@ int main(int argc, char *argv[]) {
 					fprintf(stderr,"Failed to use port %s\n\r",optarg);
 					exit(-1);
 				}
+				break;
+			case 'M': //route messages from aprs-is to local ax25 stations in mheard
+			case 'm':
+					messagegate = 1;
+					//printf("Function is not available in this version");
 				break;
 			case 'H': //print help.
 			case 'h': 
@@ -146,15 +154,20 @@ int main(int argc, char *argv[]) {
 	}		
 	
 	//print some data.
-	if (verbose) printf("\nMycall: %s\nCallpass: %d\nServer: %s port %i\n\n",mycall, callpass, hostname, port);
+	if (verbose) printf("\nMycall: %s\nCallpass: %d\nServer: %s port %i\nMessage Gate:",mycall, callpass, hostname, port);
+	if (verbose && messagegate == 1) printf(" Active");
+	else if (verbose) printf(" Inactive");
+	if (verbose) printf("\n\n");
 	
 	//connect to APRS-IS
-	connectAndLogin(hostname,port,mycall,callpass,verbose);
+	connectAndLogin(hostname,port,mycall,callpass,messagegate,verbose);
 
 	//run main loop
 	while(1) {
 		//sleep 25ms to avoid using 100% cpu
 		usleep(25000);
+		
+		//printf("MainWhile\n");
 		
 		//check for new data
 		while (mac_avl()) { 
@@ -177,7 +190,7 @@ int main(int argc, char *argv[]) {
 							disconnectFromAPRSIS();
 							if (verbose) printf("Connection lost to %s:%i. Reconnecting in 5 seconds..\n",hostname,port);
 							sleep(5);
-							connectAndLogin(hostname,port,mycall,callpass,verbose);
+							connectAndLogin(hostname,port,mycall,callpass,messagegate,verbose);
 						}
 					} else {
 						if (verbose) printf("Double data. Already sent to APRS-IS.\n");
@@ -188,10 +201,16 @@ int main(int argc, char *argv[]) {
 	
 	
 		//check for data on telnet
-		gotTelnetData = readDataFromAPRSIS(telnetrxdata);
-		if (gotTelnetData) {
-			printf("Telnet: %s\n",telnetrxdata);
-			decodeTelnetFrame(telnetrxdata,&telnet_uidata);			
+		if (messagegate == 1) {
+			while(readDataFromAPRSIS(telnetrxdata)) {
+				char txrf[256] = {0};
+				//printf("Telnet: %s\n",telnetrxdata);
+				decodeTelnetFrame(telnetrxdata,&telnet_uidata);
+				if (checkMessageAgainstMHandPrepareForTX(&telnet_uidata, mycall, txrf)) {
+					printf("txrf: %s\n",txrf);
+					sendToRf(txrf, mycall);
+				}
+			}
 		}
 			
 
@@ -200,24 +219,93 @@ int main(int argc, char *argv[]) {
 	return 0; 
 }
 
-short checkMessageAgainstMH(telnet_uidata_t *uidata) {
+void sendToRf(char *payload, char *mycall) {
+	uidata_t uidata;
+	int n = 0;
+	char *tmp;
+	frame_t frame;
+	
+	/* prepare transmission */
+    uidata.port = 0;
+
+    /* transmit remotely */
+    uidata.distance = REMOTE;
+
+    /* primitive UI with no poll bit */
+    uidata.primitive = 0x03;
+
+    /* PID = 0xF0, normal AX25*/
+    uidata.pid = 0xF0;
+
+    /* fill in originator */
+    strcpy(uidata.originator, mycall);
+    uidata.orig_flags = (char) (RR_FLAG | C_FLAG);
+
+    /* fill in destination */
+    strcpy(uidata.destination, "APNS01");
+    uidata.dest_flags = RR_FLAG;
+	
+	//set digipath to WIDE1-1
+	strcpy(uidata.digipeater[0], "WIDE1-1");
+	uidata.digi_flags[0] = RR_FLAG;
+	uidata.ndigi = 1;
+	
+	/* convert newline to cariage-return characters */
+	tmp = payload;
+	while(*tmp != '\0')
+	{
+	    if(*tmp == '\n')
+	    {
+	        *tmp = '\r';
+	    }
+	    tmp++;
+	}
+	
+	
+	/* check if there is a '\r' at the end, if not then add it */
+    n = strlen(payload);
+    if((n == 0) || (payload[n - 1] != '\r'))
+      {
+      /* add a <CR> at the end */
+      strcat(payload,"\r");
+    }
+
+	//check for empty line.	
+    if(strlen(payload) == 1)
+    {
+        return;
+    }
+	
+	//add payload to uidata.
+    strcpy(uidata.data, payload);
+    uidata.size = strlen(payload);
+    
+    dump_uidata_to("0", &uidata);
+    
+    //convert to ax25 mac frame.
+    uidata2frame(&uidata, &frame);
+    //transmit.
+    mac_out(&frame);
+    
+    
+}
+
+short checkMessageAgainstMHandPrepareForTX(telnet_uidata_t *uidata, char *mycall, char *rftx) {
 	//if the payload starts with ':' we have a message.
-	/*if (uidata->data[0] == ':') {
+	if (uidata->data[0] == ':') {
 		//we have a msg!
-		char *to;
-		char *msg;
-		to = calloc(10,sizeof(char));
-		msg = calloc(1000,sizeof(char));
-		to = strtok(payload,":");
-		msg = strtok(NULL,"\0");
-		//check MH to see if we want to gate this to RF.
-		printf("msg to: %s | %s\n",to,msg);
-	}*/
-	
-	
-	//free(from);
-	//free(to);
-	//free(msg);
+		char to[10] = {0};
+		char msg[256] = {0};
+		strcpy(to,strtok(uidata->data,":"));
+		strcpy(msg,strtok(NULL,"\0"));
+		//check mh
+		
+		//prepare to tx to rf
+		char dst[10];
+		strcpy(dst,strtok(uidata->path,","));
+		sprintf(rftx,"}%s>%s,TCPIP,%s*:%s:%s\n",uidata->src,dst,mycall,to,msg);
+		return 1;
+	}
 	
 	return 0;
 }
@@ -254,15 +342,15 @@ void strtoupper(char* s) {
 	while ((*s = toupper(*s))) ++s;
 }
 
-void connectAndLogin(char *hostname,int port,char *mycall,short callpass,short verbose) {
+void connectAndLogin(char *hostname,int port,char *mycall,short callpass,short messagegate, short verbose) {
 	if (verbose) printf("Connecting to %s:%i as %s\n",hostname,port,mycall);
 	if (connectToAPRSIS(hostname, port)) {
 		usleep(25000);
-		if (!loginToAPRSIS(mycall, callpass, version)) {
+		if (!loginToAPRSIS(mycall, callpass, version, messagegate)) {
 			if (verbose) printf("Failed to send login data. Retrying in 5 seconds..\n");
 			disconnectFromAPRSIS();
 			sleep(5);
-			connectAndLogin(hostname,port,mycall,callpass,verbose);
+			connectAndLogin(hostname,port,mycall,callpass,messagegate,verbose);
 		} else {
 			if (verbose) printf("Connected!\n");
 		}
@@ -270,20 +358,22 @@ void connectAndLogin(char *hostname,int port,char *mycall,short callpass,short v
 		if (verbose) printf("Failed to connect. Retrying in 5 seconds..\n");
 		disconnectFromAPRSIS();
 		sleep(5);
-		connectAndLogin(hostname,port,mycall,callpass,verbose);
+		connectAndLogin(hostname,port,mycall,callpass,messagegate,verbose);
 	}
 }
 
 //show usage help
 void showhelp(char *filename) {
-	printf("Usage: %s -p <port> [-p <port>] [-p <port>] [...] -c <igatecall> -s <APRS-IS server> [-v]\n\n",filename);
+	printf("Usage: %s -p <port> [-p <port>] [-p <port>] [...] -c <igatecall> -s <APRS-IS server> [-m] [-v]\n\n",filename);
 	printf("\t-p\tAdd an AX25 port to listen on. Multiples can be specified with a maximum of 8\n");
 	printf("\t-c\tThe callsign to login to APRS-IS. eg: ON4SAX-10\n");
-	printf("\t-s\tThe address to connect to APRS-IS. eg: t2belgium.aprs2.net:14580\n");
-	printf("\t\tor t2belgium.aprs2.net. In the latter the default port 14580 will be used.\n");
+	printf("\t-s\tThe address to connect to APRS-IS. eg: belgium.aprs2.net:14580\n");
+	printf("\t\tor belgium.aprs2.net. In the latter the default port 14580 will be used.\n");
+	printf("\t-m\tTurns on message gate. This will forward messages from aprs-is to\n");
+	printf("\t\tthe air for stations locally heard in the last 10 minutes.\n"); 
 	printf("\t-v\tVerbose output. Program will stay in foreground.\n");
 	printf("\t-h\tPrint help (you are looking at it)\n");
-	printf("\nExample of Usage: %s -p 2m -p 70cm -c ON4SAX-10 -s t2belgium.aprs2.net:14580\n\n",filename);
+	printf("\nExample of Usage: %s -p 2m -p 70cm -c ON4SAX-10 -s belgium.aprs2.net:14580 -m\n\n",filename);
 	printf("Report bugs to <on4sax@on4sax.be>.\n");
 	exit(-1);
 }

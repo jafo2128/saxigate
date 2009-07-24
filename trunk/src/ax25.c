@@ -212,8 +212,41 @@ short mac_inp(frame_t *frame_p)
     return -1;
 }
 
-void dump_raw(frame_t *frame_p)
-{
+/* AX25_MAC call to put TX data in the MAC layer */
+short mac_out(frame_t *frame_p) {
+    struct sockaddr  to;
+    char             data[MAX_FRAME_LENGTH + 1];
+    int              res;
+    ports_t         *prt_p;
+
+    prt_p = &(lnx_port[(short) frame_p->port]);
+
+    bzero(&to,sizeof(struct sockaddr));
+    to.sa_family = AF_INET;
+    strcpy(to.sa_data, prt_p->dev_p);
+
+    data[0] = 0; /* this is data */
+    memcpy(&data[1], frame_p->frame, frame_p->len);
+
+    res = sendto(prt_p->s_out, data, frame_p->len + 1, 0, &to, sizeof(to));
+    if (res >= 0)
+    {
+            return 0;
+    }
+    if (errno == EMSGSIZE) {
+            //vsay("Sendto: packet (size %d) too long\r\n", frame_p->len + 1);
+            return -1;
+    }
+    if (errno == EWOULDBLOCK) {
+            //vsay("Sendto: busy\r\n");
+            return -1;
+    }
+    perror("sendto");
+    return -1;
+}
+
+
+void dump_raw(frame_t *frame_p) {
     short i, c;
 
     printf("Received from port %d\r\n", (short) frame_p->port + 1);
@@ -737,6 +770,183 @@ short frame2uidata(frame_t *frame_p, uidata_t *uidata_p, char *digi_digi_call)
 }
 
 /*
+ * convert a disassembled frame structure to a raw AX.25 frame 
+ */
+void uidata2frame(uidata_t *uidata_p, frame_t *frame_p) {
+    unsigned char  i,j;
+    unsigned short k;
+    unsigned short ssid;
+    unsigned short len;
+    unsigned char *bp;
+
+    frame_p->port = uidata_p->port;
+
+    bp = &(frame_p->frame[0]);
+
+    len = 0; /* begin of frame */
+
+    /* Destination of frame */
+    j = 0;
+    for(i = 0; i < 6; i++)
+    {
+        /* if not end of string or at SSID mark */
+        if((uidata_p->destination[j] != '\0')
+           &&
+           (uidata_p->destination[j] != '-'))
+        {
+            bp[i] = (uidata_p->destination[j++] << 1);
+        }
+        else
+        {
+            bp[i] = 0x40;
+        }
+    }
+    if(uidata_p->destination[j] == '-')
+    {
+        /* "j" points to the SSID mark */
+        j++;
+        
+        ssid = uidata_p->destination[j++] - '0';
+        if(uidata_p->destination[j] != '\0')
+        {
+            ssid = (10 * ssid) + (uidata_p->destination[j++] - '0');
+        }
+    }
+    else
+    {
+        ssid = 0;
+    }
+    bp[6] = (ssid << 1) | uidata_p->dest_flags;
+    bp += 7;
+    len += 7;
+
+    /* Source of frame */
+    j = 0;
+    for(i = 0; i < 6; i++)
+    {
+        /* if not end of string or at SSID mark */
+        if((uidata_p->originator[j] != '\0')
+           &&
+           (uidata_p->originator[j] != '-'))
+        {
+            bp[i] = (uidata_p->originator[j++] << 1);
+        }
+        else
+        {
+            bp[i] = 0x40;
+        }
+    }
+    if(uidata_p->originator[j] == '-')
+    {
+        /* "j" points to the SSID mark */
+        j++;
+
+        ssid = uidata_p->originator[j++] - '0';
+        if(uidata_p->originator[j] != '\0')
+        {
+            ssid = (10 * ssid) + (uidata_p->originator[j++] - '0');
+        }
+    }
+    else
+    {
+        ssid = 0;
+    }
+    bp[6] = (ssid << 1) | uidata_p->orig_flags;
+    bp += 7;
+    len += 7;
+
+    /* Digipeaters */
+    for(k = 0; k < uidata_p->ndigi; k++)
+    {
+        /* check if the distribution distance should be LOCAL */
+        if( uidata_p->distance == LOCAL )
+        {
+            /*
+             * to keep the frame local avoid that it is digipeated after
+             * we transmitted it, there shall not be any unused digipeater
+             * in the frame. break out of the loop if an unused digipeater
+             * is encountered
+             *
+             * an unused digipeater doesn't have its H_BIT set in the SSID
+             */
+            if((uidata_p->digi_flags[k] & H_FLAG) == 0)
+            {
+                /* don't put "unused" digipeaters in the frame */
+                break; /* break out of the for loop */
+            }
+        }
+
+        j = 0;
+        for(i = 0; i < 6; i++)
+        {
+            /* if not end of string or at SSID mark */
+            if((uidata_p->digipeater[k][j] != '\0')
+               &&
+               (uidata_p->digipeater[k][j] != '-'))
+            {
+                bp[i] = (uidata_p->digipeater[k][j++] << 1);
+            }
+            else
+            {
+                bp[i] = 0x40;
+            }
+        }
+        if(uidata_p->digipeater[k][j] == '-')
+        {
+            /* "j" points to the SSID mark */
+            j++;
+
+            ssid = uidata_p->digipeater[k][j++] - '0';
+            if(uidata_p->digipeater[k][j] != '\0')
+            {
+                ssid = (10 * ssid) + (uidata_p->digipeater[k][j++] - '0');
+            }
+        }
+        else
+        {
+            ssid = 0;
+        }
+        bp[6] = (ssid << 1) | uidata_p->digi_flags[k];
+        bp += 7;
+        len += 7;
+    }
+
+    /* patch bit 1 on the last address */
+    bp[-1] = bp[-1] | END_FLAG;
+
+    /* We are now at the primitive bit */
+    *bp = uidata_p->primitive;
+    bp++;
+    len++;
+
+    /* if PID == 0xffff we don't have a PID */
+    if(uidata_p->pid == 0xffff)
+    {
+        frame_p->len = len;
+        return;
+    }
+
+    /* set the PID */
+    *bp = (char) uidata_p->pid;
+    bp++;
+    len++;
+
+    /* when size == 0 don't copy */
+    if(uidata_p->size == 0)
+    {
+        frame_p->len = len;
+        return;
+    }
+
+    memcpy(bp, &(uidata_p->data[0]), uidata_p->size);
+    len += uidata_p->size;
+
+    frame_p->len = len;
+
+    return;
+}
+
+/*
  * Check if the input string is a valid call
  *
  * Returns: 0 if not okay
@@ -865,6 +1075,12 @@ void dump_uidata_from(uidata_t *uidata_p, short verbose)
         printf("This is a local station\r\n");
     }
 } 
+
+void dump_uidata_to(char *to, uidata_t *uidata_p)
+{
+    printf("to:%s ", to);
+    dump_uidata_common(uidata_p, REMOTE, 1);
+}
 
 void dump_uidata_common(uidata_t *uidata_p, distance_t distance, short verbose)
 {
