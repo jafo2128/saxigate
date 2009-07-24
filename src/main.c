@@ -34,7 +34,7 @@
 
 
 short checkMessageAgainstMHandPrepareForTX(telnet_uidata_t *uidata, char *mycall, char *rftx);
-void sendToRf(char *payload, char *mycall);
+void sendToRf(char *payload, char *mycall, short verbose);
 
 void strtoupper(char*);
 void igateformat(uidata_t*, char*, char*);
@@ -117,7 +117,17 @@ int main(int argc, char *argv[]) {
 			case 'M': //route messages from aprs-is to local ax25 stations in mheard
 			case 'm':
 					messagegate = 1;
-					//printf("Function is not available in this version");
+					printf("\n*********************** !!! WARNING !!! ***********************");
+					printf("\n* The MessageGate function is *NOT* completed yet and in beta *");
+					printf("\n* It will forward __ALL__ messages from the APRS-IS WorldWide *");
+					printf("\n* backbone to your first RF port. This is considered RF-SPAM  *");
+					printf("\n* and frowned upon. Please do not use this in production !!   *");
+					printf("\n***************************************************************\n");
+					printf("\n*********************** !!! WARNING !!! ***********************");
+					printf("\n* Sending data TO rf has not been tested with a live TNC yet. *");
+					printf("\n* Use at OWN RISK and *NOT* on your local APRS frequency!     *");
+					printf("\n***************************************************************\n");
+					
 				break;
 			case 'H': //print help.
 			case 'h': 
@@ -207,8 +217,8 @@ int main(int argc, char *argv[]) {
 				//printf("Telnet: %s\n",telnetrxdata);
 				decodeTelnetFrame(telnetrxdata,&telnet_uidata);
 				if (checkMessageAgainstMHandPrepareForTX(&telnet_uidata, mycall, txrf)) {
-					printf("txrf: %s\n",txrf);
-					sendToRf(txrf, mycall);
+					//printf("txrf: %s\n",txrf);
+					sendToRf(txrf, mycall, verbose);
 				}
 			}
 		}
@@ -219,7 +229,7 @@ int main(int argc, char *argv[]) {
 	return 0; 
 }
 
-void sendToRf(char *payload, char *mycall) {
+void sendToRf(char *payload, char *mycall, short verbose) {
 	uidata_t uidata;
 	int n = 0;
 	char *tmp;
@@ -280,7 +290,7 @@ void sendToRf(char *payload, char *mycall) {
     strcpy(uidata.data, payload);
     uidata.size = strlen(payload);
     
-    dump_uidata_to("0", &uidata);
+    dump_uidata_to(&uidata, verbose);
     
     //convert to ax25 mac frame.
     uidata2frame(&uidata, &frame);
