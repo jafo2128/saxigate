@@ -33,7 +33,7 @@ void disconnectFromAPRSIS() {
 }
 
 //connect To APRSIS server (standard telnet socket though)
-short connectToAPRSIS(char *hostname, int port) {
+short connectToAPRSIS() {
 	struct hostent *server;
 	struct sockaddr_in serv_addr;
 
@@ -49,11 +49,11 @@ short connectToAPRSIS(char *hostname, int port) {
 	}
 	
 	//get the ip 
-	server = gethostbyname(hostname);
+	server = gethostbyname(telnet_info.hostname);
 	//check if we have an ip.
 	if (server == NULL) {
 		fprintf(stderr,"ERROR, no such host\n");
-		exit(-1);
+		return 0;
 	}
 	
 	//clear serv_addr struct before we fill it..
@@ -63,7 +63,7 @@ short connectToAPRSIS(char *hostname, int port) {
 	//copy the ip into serv_addr
 	bcopy((char*)server->h_addr, (char*)&serv_addr.sin_addr.s_addr, server->h_length);
 	//set the port into serv_addr
-	serv_addr.sin_port = htons(port);
+	serv_addr.sin_port = htons(telnet_info.port);
 	
 	//connect to server.
 	if(connect(sockfd,&serv_addr,sizeof(serv_addr)) < 0) {
@@ -193,21 +193,21 @@ short decodeTelnetFrame(char *frame, telnet_uidata_t *uidata) {
 }
 
 //login to APRS server.
-short loginToAPRSIS(char *callsign, short callpass, char *version, short messagegate) {
+short loginToAPRSIS() {
 	char buffer[1000];
 	char filter[12] = {0};
 	
-	if (messagegate == 1) {
+	if (telnet_info.messagegate == 1) {
 		strcpy(filter," filter t/m");
 	}
 	
 	//generate login string for aprs-is (javaprs docs)
-	sprintf(buffer, "user %s pass %d vers saxIgate %s%s",callsign,callpass,version,filter);
+	sprintf(buffer, "user %s pass %d vers saxIgate %s%s",telnet_info.mycall,telnet_info.callpass,telnet_info.version,filter);
 	//send it over the socket.
 	if (sendDataToAPRSIS(buffer)) {
 		usleep(10000); //wait 10ms.
 		//sendout an ID beacon over APRS-IS.
-		sprintf(buffer, "%s>ID,qAR,%s:>%s IGATE running saxIgate %s",callsign,callsign,callsign,version);
+		sprintf(buffer, "%s>ID,qAR,%s:>%s IGATE running saxIgate %s",telnet_info.mycall,telnet_info.mycall,telnet_info.mycall,telnet_info.version);
 		if (sendDataToAPRSIS(buffer))
 			return 1;
 		else
@@ -217,4 +217,31 @@ short loginToAPRSIS(char *callsign, short callpass, char *version, short message
 	};
 }
  
-
+void setTelnetInfo(char *hostname, int port, char *mycall, short callpass,short messagegate, char *version) {
+	strcpy(telnet_info.hostname,hostname);
+	strcpy(telnet_info.mycall,mycall);
+	strcpy(telnet_info.version,version);
+	telnet_info.port = port;
+	telnet_info.callpass = callpass;
+	telnet_info.messagegate = messagegate;
+}
+ 
+void connectAndLogin(short verbose) {
+	if (verbose) printf("Connecting to %s:%i as %s\n",telnet_info.hostname,telnet_info.port,telnet_info.mycall);
+	if (connectToAPRSIS()) {
+		usleep(25000);
+		if (!loginToAPRSIS()) {
+			if (verbose) printf("Failed to send login data. Retrying in 5 seconds..\n");
+			disconnectFromAPRSIS();
+			sleep(5);
+			connectAndLogin(verbose);
+		} else {
+			if (verbose) printf("Connected!\n");
+		}
+	} else {
+		if (verbose) printf("Failed to connect. Retrying in 5 seconds..\n");
+		disconnectFromAPRSIS();
+		sleep(5);
+		connectAndLogin(verbose);
+	}
+}
