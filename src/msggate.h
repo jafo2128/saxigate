@@ -16,32 +16,12 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#ifndef MSGGATE_H_
+#define MSGGATE_H_
 
-typedef struct telnet_uidata_s {
-	char src[9];
-	char path[100];
-	char data[1000];	
-} telnet_uidata_t;
+void doMessageGate(char *mycall, short verbose);
+short checkMessageAgainstMHandPrepareForTX(telnet_uidata_t *uidata, char *mycall, char *rftx);
+void sendToRf(char *payload, char *mycall, short verbose);
 
-typedef struct telnet_info_s {
-	char hostname[100];
-	int port;
-	short callpass;
-	short messagegate;
-	char version[15];
-	char mycall[10];
-} telnet_info_t;
-
-short connectToAPRSIS();
-short sendDataToAPRSIS(char[]);
-short loginToAPRSIS();
-void disconnectFromAPRSIS();
-short readDataFromAPRSIS(char *buffer);
-short decodeTelnetFrame(char *frame, telnet_uidata_t *uidata);
-void connectAndLogin(short);
-void setTelnetInfo(char *hostname, int port, char *mycall, short callpass,short messagegate, char *version);
-
-int sockfd;
-char rcvBuffer[8192];
-struct telnet_info_s telnet_info;
+#endif /*MSGGATE_H_*/
 

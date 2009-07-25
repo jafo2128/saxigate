@@ -1,6 +1,7 @@
 CHANGELOG:
 
 v0.1.7 BETA: - Fixed a bug that would crash the app when a port was specified. Thx to OK1TEB for notifying me.
+	- Cleaned up code in main.c and distributed it over igate.c and msggate.c, for a cleaner approach.
 	- Added -m flag to enable MessageGate; Warning! Still in beta.
 	  CURRENTLY SENDS _ALL_ MESSAGES FROM APRSIS ON PORT 1. THIS IS A LOT
 	  OF RF SPAM !!! DO NOT USE IN PRODUCTION !!!

@@ -16,32 +16,11 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#ifndef IGATE_H_
+#define IGATE_H_
 
-typedef struct telnet_uidata_s {
-	char src[9];
-	char path[100];
-	char data[1000];	
-} telnet_uidata_t;
+void readAx25DataForIgate(char *mycall, short verbose);
+void igateformat(uidata_t *uidata, char *mycall, char *out);
 
-typedef struct telnet_info_s {
-	char hostname[100];
-	int port;
-	short callpass;
-	short messagegate;
-	char version[15];
-	char mycall[10];
-} telnet_info_t;
 
-short connectToAPRSIS();
-short sendDataToAPRSIS(char[]);
-short loginToAPRSIS();
-void disconnectFromAPRSIS();
-short readDataFromAPRSIS(char *buffer);
-short decodeTelnetFrame(char *frame, telnet_uidata_t *uidata);
-void connectAndLogin(short);
-void setTelnetInfo(char *hostname, int port, char *mycall, short callpass,short messagegate, char *version);
-
-int sockfd;
-char rcvBuffer[8192];
-struct telnet_info_s telnet_info;
-
+#endif /*IGATE_H_*/
