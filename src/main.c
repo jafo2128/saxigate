@@ -55,7 +55,6 @@ int main(int argc, char *argv[]) {
 	
 	//plot program info
 	printf("saxIgate v%s (c) 2009-2010 Robbie De Lise (ON4SAX)\n",version);
-	
 	//get options from argv 	
 	while ((c = getopt(argc, argv, "hvmc:p:s:")) != -1) {
 		switch (c) {
@@ -84,8 +83,8 @@ int main(int argc, char *argv[]) {
 			case 'S': //set aprs-is server
 			case 's':
 				//split string on ':' for hostname and port.
-				strcpy(hostname,strtok(optarg,":"));
-				strcpy(portstr,strtok(NULL,"\0"));
+				hostname = strtok(optarg,":");
+				portstr = strtok(NULL,":");
 				//if no port specified, use default.
 				if (portstr == NULL) {
 					port = 14580;
@@ -94,7 +93,7 @@ int main(int argc, char *argv[]) {
 					port = atoi(portstr);
 				}
 				//no need for portstr anymore..
-				free(portstr);
+				//free(portstr); //generates seg fault.
 				break;
 			
 			case 'P': //add a ax25 port.
@@ -201,7 +200,7 @@ void showhelp(char *filename) {
 	printf("\t-s\tThe address to connect to APRS-IS. eg: belgium.aprs2.net:14580\n");
 	printf("\t\tor belgium.aprs2.net. In the latter the default port 14580 will be used.\n");
 	//printf("\t-m\tTurns on message gate. This will forward messages from aprs-is to\n");
-	printf("\t\tthe air for stations locally heard in the last 10 minutes.\n"); 
+	//printf("\t\tthe air for stations locally heard in the last 10 minutes.\n");
 	printf("\t-v\tVerbose output. Program will stay in foreground.\n");
 	printf("\t-h\tPrint help (you are looking at it)\n");
 	printf("\nExample of Usage: %s -p 2m -p 70cm -c ON4SAX-10 -s belgium.aprs2.net:14580 -m\n\n",filename);
