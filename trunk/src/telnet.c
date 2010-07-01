@@ -90,7 +90,7 @@ short sendDataToAPRSIS(char buffer[1000]) {
 	}
 }
  
-short readDataFromAPRSIS(char *buffer) {
+/*short readDataFromAPRSIS(char *buffer) {
 	//This function will read the telnet data in chunks of 256 bytes and place them
 	//in a 8kb buffer. It will then search the buffer for the first '\n' and return the
 	//line. Next time, even if there is no telnet data waiting, we can return the next line.
@@ -152,11 +152,11 @@ short readDataFromAPRSIS(char *buffer) {
 		//we have data!
 		return 1;
 	}
-	//we have no data..*/
+	//we have no data..
 	return 0;
-}
+}*/
 
-short decodeTelnetFrame(char *frame, telnet_uidata_t *uidata) {
+/*short decodeTelnetFrame(char *frame, telnet_uidata_t *uidata) {
 	if (frame == NULL)
 		return 0; //no data.
 	
@@ -180,7 +180,7 @@ short decodeTelnetFrame(char *frame, telnet_uidata_t *uidata) {
 		/*if (from != NULL) free(from);
 		if (path != NULL) free(path);
 		if (payload != NULL) free(payload);*/
-		return 0;
+	/*	return 0;
 	}
 	
 	strcpy(uidata->src,from);
@@ -190,7 +190,7 @@ short decodeTelnetFrame(char *frame, telnet_uidata_t *uidata) {
 	//printf("%s | %s | %s\n",from,path,payload);
 	
 	return 1;
-}
+}*/
 
 //login to APRS server.
 short loginToAPRSIS() {

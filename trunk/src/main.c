@@ -30,9 +30,9 @@
 #include "telnet.h"
 #include "cache.h"
 #include "igate.h"
-#include "msggate.h"
+//#include "msggate.h"
  
-#define version "0.1.7-beta"
+#define version "0.1.7"
 
 
 void strtoupper(char*);
@@ -54,7 +54,7 @@ int main(int argc, char *argv[]) {
 	portstr = calloc(10, sizeof(char));
 	
 	//plot program info
-	printf("saxIgate v%s (c) 2009 Robbie De Lise (ON4SAX)\n",version);
+	printf("saxIgate v%s (c) 2009-2010 Robbie De Lise (ON4SAX)\n",version);
 	
 	//get options from argv 	
 	while ((c = getopt(argc, argv, "hvmc:p:s:")) != -1) {
@@ -105,7 +105,7 @@ int main(int argc, char *argv[]) {
 					exit(-1);
 				}
 				break;
-			case 'M': //route messages from aprs-is to local ax25 stations in mheard
+			/*case 'M': //route messages from aprs-is to local ax25 stations in mheard
 			case 'm':
 					messagegate = 1;
 					printf("\n*********************** !!! WARNING !!! ***********************");
@@ -119,7 +119,7 @@ int main(int argc, char *argv[]) {
 					printf("\n* Use at OWN RISK and *NOT* on your local APRS frequency!     *");
 					printf("\n***************************************************************\n");
 					
-				break;
+				break;*/
 			case 'H': //print help.
 			case 'h': 
 			case '?':
@@ -155,9 +155,10 @@ int main(int argc, char *argv[]) {
 	}		
 	
 	//print some data.
-	if (verbose) printf("\nMycall: %s\nCallpass: %d\nServer: %s port %i\nMessage Gate:",mycall, callpass, hostname, port);
+	/*if (verbose) printf("\nMycall: %s\nCallpass: %d\nServer: %s port %i\nMessage Gate:",mycall, callpass, hostname, port);
 	if (verbose && messagegate == 1) printf(" Active");
-	else if (verbose) printf(" Inactive");
+	else if (verbose) printf(" Inactive");*/
+	if (verbose) printf("\nMycall: %s\nCallpass: %d\nServer: %s port %i",mycall, callpass, hostname, port);
 	if (verbose) printf("\n\n");
 	
 	//set telnet_info
@@ -175,9 +176,9 @@ int main(int argc, char *argv[]) {
 		readAx25DataForIgate(mycall, verbose);
 			
 		//check for data on telnet
-		if (messagegate == 1) {
+		/*if (messagegate == 1) {
 			doMessageGate(mycall, verbose);
-		}
+		}*/
 			
 
 	} //endwhile mainloop. (ctrl+c or external signal)
@@ -199,7 +200,7 @@ void showhelp(char *filename) {
 	printf("\t-c\tThe callsign to login to APRS-IS. eg: ON4SAX-10\n");
 	printf("\t-s\tThe address to connect to APRS-IS. eg: belgium.aprs2.net:14580\n");
 	printf("\t\tor belgium.aprs2.net. In the latter the default port 14580 will be used.\n");
-	printf("\t-m\tTurns on message gate. This will forward messages from aprs-is to\n");
+	//printf("\t-m\tTurns on message gate. This will forward messages from aprs-is to\n");
 	printf("\t\tthe air for stations locally heard in the last 10 minutes.\n"); 
 	printf("\t-v\tVerbose output. Program will stay in foreground.\n");
 	printf("\t-h\tPrint help (you are looking at it)\n");
